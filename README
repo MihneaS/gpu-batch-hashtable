@@ -1,0 +1,272 @@
+Tema 3 ASC - Hashtable Paralel
+
+Serban Mihnea
+331CA
+
+Structura Hashtable
+###################
+Hashtable-ul este retinut ca un un vector de entry-uri si dimensiunea acestuia.
+Un entry e o structura cu un int pentru cheie si un int pentru valoare.
+Vectorul de entry-uri este retinut in VRAM.
+
+Structura rezolvarii
+####################
+Functiile sunt organizate (in mod natural) in 3 straturi: functiile __device__
+care trateaza operatiile hashtable-ului la nivel de core, functiile __global__
+care trateaza problema la nivel de GPU (apeland functiile __device__) si
+functiile clasei GpuHashTable ce reprezinta un wrapper pentru functiile
+__global__.
+
+Rezolvarea coliziunilor
+#######################
+In caz de coliziune se adauga 1 si se face % size la hash-ul cheii pana gasesc
+un loc liber. De aceea in operatia de insert, cautarea se opreste in momentul
+in care s-a gasit cheia cautata, sau o casuta libera. In cazul operatiei de get
+se opreste in cazul in care gaseste cheia cautata. altfel intoarce -1.
+
+Rezolvarea problemelor legate de paralelism
+###########################################
+Majoritatea problemelor au fost rezolvate folosind CudaDeviceSynchronize()
+ininte si dupa anumite opratii. Notabila exceptie o reprezinta insertia: Aici
+am folosit atomicCAS pentru a ma asigra ca numai un thread poate folosi o
+casuta goala.
+
+Loadfactor
+##########
+Acesta este calculat de fiecare data numarand toate locurile din vectorul de
+entry-uri care au cheia diferita de 0 si impartind la dimensiunea vectorului.
+
+Punctaj optinut pe coada si output
+########################
+coada: hpsl-wn02
+punctaj: 80/90.
+output:
+size:100000
+current_occupied:0
+numKeys:100000
+loadFactor:1
+new_size:200000
+size:200000
+current_occupied:100000
+numKeys:256
+loadFactor:0.50128
+new_size:200000
+chunckSize: 100000
+mistmatches: 0
+('HASH_BATCH_INSERT, 100000, 5, 50', ' OK')
+('HASH_BATCH_GET, 100000, inf, 50', ' OK')
+Test T1 20/20
+
+size:2000000
+current_occupied:0
+numKeys:2000000
+loadFactor:1
+new_size:4000000
+size:4000000
+current_occupied:2000000
+numKeys:256
+loadFactor:0.500064
+new_size:4000000
+chunckSize: 2000000
+mistmatches: 0
+('HASH_BATCH_INSERT, 2000000, 8.69565, 50', ' OK')
+('HASH_BATCH_GET, 2000000, 100, 50', ' OK')
+Test T2 20/20
+
+size:800000
+current_occupied:0
+numKeys:800000
+loadFactor:1
+new_size:1600000
+size:1600000
+current_occupied:800000
+numKeys:800000
+loadFactor:1
+new_size:3200000
+size:3200000
+current_occupied:1600000
+numKeys:800000
+loadFactor:0.75
+new_size:3200000
+size:3200000
+current_occupied:2400000
+numKeys:800000
+loadFactor:1
+new_size:6400000
+size:6400000
+current_occupied:3200000
+numKeys:800000
+loadFactor:0.625
+new_size:6400000
+size:6400000
+current_occupied:4000000
+numKeys:256
+loadFactor:0.62504
+new_size:6400000
+chunckSize: 800000
+mistmatches: 0
+chunckSize: 800000
+mistmatches: 0
+chunckSize: 800000
+mistmatches: 0
+chunckSize: 800000
+mistmatches: 0
+chunckSize: 800000
+mistmatches: 0
+('HASH_BATCH_INSERT, 800000, 8.88889, 50', ' OK')
+('HASH_BATCH_INSERT, 800000, 4.44444, 50', ' OK')
+('HASH_BATCH_INSERT, 800000, 2.35294, 75', ' OK')
+('HASH_BATCH_INSERT, 800000, 2.22222, 50', ' OK')
+('HASH_BATCH_INSERT, 800000, 1.15942, 62.5', ' OK')
+('HASH_BATCH_GET, 800000, 80, 62.5', ' OK')
+('HASH_BATCH_GET, 800000, inf, 62.5', ' OK')
+('HASH_BATCH_GET, 800000, inf, 62.5', ' OK')
+('HASH_BATCH_GET, 800000, inf, 62.5', ' OK')
+('HASH_BATCH_GET, 800000, 40, 62.5', ' OK')
+Test T3 10/10
+
+size:10000000
+current_occupied:0
+numKeys:10000000
+loadFactor:1
+new_size:20000000
+size:20000000
+current_occupied:10000000
+numKeys:256
+loadFactor:0.500013
+new_size:20000000
+chunckSize: 10000000
+mistmatches: 0
+('HASH_BATCH_INSERT, 10000000, 8.77193, 50', {'points': 10, 'minLoadFactor': 40, 'minThroughput': 10}, ' FAIL')
+('HASH_BATCH_GET, 10000000, 166.667, 50', ' OK')
+Test T4 10/20
+
+size:2000000
+current_occupied:0
+numKeys:2000000
+loadFactor:1
+new_size:4000000
+size:4000000
+current_occupied:2000000
+numKeys:2000000
+loadFactor:1
+new_size:8000000
+size:8000000
+current_occupied:4000000
+numKeys:2000000
+loadFactor:0.75
+new_size:8000000
+size:8000000
+current_occupied:6000000
+numKeys:2000000
+loadFactor:1
+new_size:16000000
+size:16000000
+current_occupied:8000000
+numKeys:2000000
+loadFactor:0.625
+new_size:16000000
+size:16000000
+current_occupied:10000000
+numKeys:256
+loadFactor:0.625016
+new_size:16000000
+chunckSize: 2000000
+mistmatches: 0
+chunckSize: 2000000
+mistmatches: 0
+chunckSize: 2000000
+mistmatches: 0
+chunckSize: 2000000
+mistmatches: 0
+chunckSize: 2000000
+mistmatches: 0
+('HASH_BATCH_INSERT, 2000000, 8.69565, 50', ' OK')
+('HASH_BATCH_INSERT, 2000000, 4.44444, 50', ' OK')
+('HASH_BATCH_INSERT, 2000000, 2.32558, 75', ' OK')
+('HASH_BATCH_INSERT, 2000000, 2.27273, 50', ' OK')
+('HASH_BATCH_INSERT, 2000000, 1.15607, 62.5', ' OK')
+('HASH_BATCH_GET, 2000000, 200, 62.5', ' OK')
+('HASH_BATCH_GET, 2000000, 200, 62.5', ' OK')
+('HASH_BATCH_GET, 2000000, 66.6667, 62.5', ' OK')
+('HASH_BATCH_GET, 2000000, 66.6667, 62.5', ' OK')
+('HASH_BATCH_GET, 2000000, 200, 62.5', ' OK')
+Test T5 20/20
+
+
+TOTAL gpu_hashtable  80/90
+[mihnea.serban@hpsl-wn02 tema3]$ ls
+bench.py  gpu_hashtable  gpu_hashtable.cu  gpu_hashtable.hpp  Makefile  output  README  std_hashtable  std_hashtable.cpp  test_map.cpp
+[mihnea.serban@hpsl-wn02 tema3]$ vim README 
+[mihnea.serban@hpsl-wn02 tema3]$ vim README 
+[mihnea.serban@hpsl-wn02 tema3]$ ls
+bench.py  gpu_hashtable  gpu_hashtable.cu  gpu_hashtable.hpp  Makefile  output  README  std_hashtable  std_hashtable.cpp  test_map.cpp
+[mihnea.serban@hpsl-wn02 tema3]$ vim gpu_hashtable.cu 
+[mihnea.serban@hpsl-wn02 tema3]$ make
+nvcc -O2 -g -std=c++11 gpu_hashtable.cu -o gpu_hashtable
+[mihnea.serban@hpsl-wn02 tema3]$ python bench.py 
+chunckSize: 100000
+mistmatches: 0
+('HASH_BATCH_INSERT, 100000, 5, 50', ' OK')
+('HASH_BATCH_GET, 100000, 10, 50', ' OK')
+Test T1 20/20
+
+chunckSize: 2000000
+mistmatches: 0
+('HASH_BATCH_INSERT, 2000000, 9.52381, 50', ' OK')
+('HASH_BATCH_GET, 2000000, inf, 50', ' OK')
+Test T2 20/20
+
+chunckSize: 800000
+mistmatches: 0
+chunckSize: 800000
+mistmatches: 0
+chunckSize: 800000
+mistmatches: 0
+chunckSize: 800000
+mistmatches: 0
+chunckSize: 800000
+mistmatches: 0
+('HASH_BATCH_INSERT, 800000, 8.88889, 50', ' OK')
+('HASH_BATCH_INSERT, 800000, 4.44444, 50', ' OK')
+('HASH_BATCH_INSERT, 800000, 2.35294, 75', ' OK')
+('HASH_BATCH_INSERT, 800000, 2.28571, 50', ' OK')
+('HASH_BATCH_INSERT, 800000, 1.15942, 62.5', ' OK')
+('HASH_BATCH_GET, 800000, 80, 62.5', ' OK')
+('HASH_BATCH_GET, 800000, inf, 62.5', ' OK')
+('HASH_BATCH_GET, 800000, inf, 62.5', ' OK')
+('HASH_BATCH_GET, 800000, inf, 62.5', ' OK')
+('HASH_BATCH_GET, 800000, 80, 62.5', ' OK')
+Test T3 10/10
+
+chunckSize: 10000000
+mistmatches: 0
+('HASH_BATCH_INSERT, 10000000, 9.09091, 50', {'points': 10, 'minLoadFactor': 40, 'minThroughput': 10}, ' FAIL')
+('HASH_BATCH_GET, 10000000, 250, 50', ' OK')
+Test T4 10/20
+
+chunckSize: 2000000
+mistmatches: 0
+chunckSize: 2000000
+mistmatches: 0
+chunckSize: 2000000
+mistmatches: 0
+chunckSize: 2000000
+mistmatches: 0
+chunckSize: 2000000
+mistmatches: 0
+('HASH_BATCH_INSERT, 2000000, 8.69565, 50', ' OK')
+('HASH_BATCH_INSERT, 2000000, 4.44444, 50', ' OK')
+('HASH_BATCH_INSERT, 2000000, 2.29885, 75', ' OK')
+('HASH_BATCH_INSERT, 2000000, 2.27273, 50', ' OK')
+('HASH_BATCH_INSERT, 2000000, 1.16279, 62.5', ' OK')
+('HASH_BATCH_GET, 2000000, 200, 62.5', ' OK')
+('HASH_BATCH_GET, 2000000, 200, 62.5', ' OK')
+('HASH_BATCH_GET, 2000000, 200, 62.5', ' OK')
+('HASH_BATCH_GET, 2000000, 100, 62.5', ' OK')
+('HASH_BATCH_GET, 2000000, 200, 62.5', ' OK')
+Test T5 20/20
+
+
+TOTAL gpu_hashtable  80/90
+
